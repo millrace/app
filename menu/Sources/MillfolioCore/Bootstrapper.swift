@@ -8,7 +8,7 @@ import CryptoKit  // SHA256 verification of the downloaded source bundle
 ///   1. **Install server** — fetch the official Mojo compiler+runtime from
 ///      Modular's conda channel (so the *user* accepts Modular's license — we
 ///      never redistribute it), unpack our engine source zip (inference-server +
-///      jinja2.mojo + flare + a prebuilt libflare_tls.so), build the server with
+///      pkgs/jinja2.mojoc + flare + a prebuilt libflare_tls.so), build the server with
 ///      `mojo build`, then download the default model's weights with the engine's
 ///      own native-Mojo downloader (no huggingface_hub).
 ///   2. **Start server** — launch the built server (via a launchd LaunchAgent, so
@@ -102,7 +102,7 @@ public final class Bootstrapper: ObservableObject {
     /// staleness check dedupes, so the toolchain is downloaded once for all components).
     private var enclaveMojoPrefix: URL { mojoPrefix }
     private var enclaveRoot: URL { bundleRoot.appendingPathComponent("enclave", isDirectory: true) }
-    /// enclave checkout inside the unpacked bundle (sibling of flare/json/jinja2.mojo).
+    /// enclave checkout inside the unpacked bundle (sibling of flare/json/pkgs).
     private var enclaveDir: URL { enclaveRoot.appendingPathComponent("enclave", isDirectory: true) }
     private var enclaveBin: URL { enclaveDir.appendingPathComponent("build/enclave") }
     /// The built enclave binary is present.
@@ -602,7 +602,7 @@ public final class Bootstrapper: ObservableObject {
 
         set("Building engine (first run, ~1 min)…")
         try buildBinary(python: python, source: "src/server.mojo",
-                        args: ["-I", "../jinja2.mojo/src", "-I", "../flare"], out: "build/server")
+                        args: ["-I", "../pkgs", "-I", "../flare"], out: "build/server")
         signServerIdentity()
 
         // Build the native-Mojo weights downloader — NOT to download here, but so the
@@ -1052,7 +1052,7 @@ public final class Bootstrapper: ObservableObject {
 
     /// Download enclave's Mojo toolchain + source bundle and build it. Separate
     /// from the server: enclave is on a different nightly and ships its own
-    /// vendored flare/json/jinja2.mojo + prebuilt FFI shims.
+    /// vendored flare/json + compiled pkgs + prebuilt FFI shims.
     public func installEnclaveEngine() async throws {
         // Idempotent: skip the whole download+build if the binary is already there.
         if stepCurrent(".enclave-step", [enclaveBin])
